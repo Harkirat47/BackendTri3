@@ -1,96 +1,71 @@
- ## Python Titanic Model
-
-# Import the required libraries
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import OneHotEncoder
+from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder
-import pandas as pd
 import seaborn as sns
 
-# Define the TitanicRegression global variable
-titanic_regression = None
+        # Load the titanic dataset
+titanic_data = sns.load_dataset('titanic')
+td = titanic_data
+td.drop(['alive', 'who', 'adult_male', 'class', 'embark_town', 'deck'], axis=1, inplace=True)
+td.dropna(inplace=True) # drop rows with at least one missing value, after dropping unuseful columns
+td['sex'] = td['sex'].apply(lambda x: 1 if x == 'male' else 0)
+td['alone'] = td['alone'].apply(lambda x: 1 if x == True else 0)
+            
+        # Encode categorical variables
+enc = OneHotEncoder(handle_unknown='ignore')
+enc.fit(td[['embarked']])
+onehot = enc.transform(td[['embarked']]).toarray()
+cols = ['embarked_' + val for val in enc.categories_[0]]
+td[cols] = pd.DataFrame(onehot)
+td.drop(['embarked'], axis=1, inplace=True)
+td.dropna(inplace=True)
 
-# Define the TitanicRegression class
-class TitanicRegression:
-    def __init__(self):
-        self.dt = None
-        self.logreg = None
-        self.X_train = None
-        self.X_test = None
-        self.y_train = None
-        self.y_test = None
-        self.encoder = None
+        # Split arrays or matrices into random train and test subsets
+X = td.drop('survived', axis=1)
+y = td['survived']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
-    def initTitanic(self):
-        titanic_data = sns.load_dataset('titanic')
-        X = titanic_data.drop('survived', axis=1)
-        y = titanic_data['survived']
-        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        # Train a logistic regression model
+logreg = LogisticRegression()
+logreg.fit(X_train, y_train)
+            
+        # Train a decision tree classifier
+dt = DecisionTreeClassifier()
+dt.fit(X_train, y_train)
 
-        # Initialize the encoder
-        self.encoder = OneHotEncoder(handle_unknown='ignore')
-        self.X_train = self.encoder.fit_transform(self.X_train)
-        self.X_test = self.encoder.transform(self.X_test)
+        # Prepare response
+passenger = pd.DataFrame({
+    'name': ['Mary Marrry'],
+    'pclass': [1], # 2nd class picked as it was median, bargains are my preference, but I don't want to have poor accomodations
+    'sex': ['female'],
+    'age': [64],
+    'sibsp': [1], # I usually travel with my wife
+    'parch': [1], # currenly I have 1 child at home
+    'fare': [83.00], # median fare picked assuming it is 2nd class
+    'embarked': ['S'], # majority of passengers embarked in Southampton
+    'alone': [False] # travelling with family (spouse and child))
+})
 
-        self.dt = DecisionTreeClassifier()
-        self.dt.fit(self.X_train, self.y_train)
+new_passenger = passenger.copy()
 
-        self.logreg = LogisticRegression()
-        self.logreg.fit(self.X_train, self.y_train)
+# Preprocess the new passenger data
+new_passenger['sex'] = new_passenger['sex'].apply(lambda x: 1 if x == 'male' else 0)
+new_passenger['alone'] = new_passenger['alone'].apply(lambda x: 1 if x == True else 0)
 
-    def runDecisionTree(self):
-        if self.dt is None:
-            print("Decision Tree model is not initialized. Please run initTitanic() first.")
-            return
-        y_pred_dt = self.dt.predict(self.X_test)
-        accuracy_dt = accuracy_score(self.y_test, y_pred_dt)
-        print('Decision Tree Classifier Accuracy: {:.2%}'.format(accuracy_dt))
+# Encode 'embarked' variable
+onehot = enc.transform(new_passenger[['embarked']]).toarray()
+cols = ['embarked_' + val for val in enc.categories_[0]]
+new_passenger[cols] = pd.DataFrame(onehot, index=new_passenger.index)
+new_passenger.drop(['name'], axis=1, inplace=True)
+new_passenger.drop(['embarked'], axis=1, inplace=True)
 
-    def runLogisticRegression(self):
-        if self.logreg is None:
-            print("Logistic Regression model is not initialized. Please run initTitanic() first.")
-            return
-        y_pred_logreg = self.logreg.predict(self.X_test)
-        accuracy_logreg = accuracy_score(self.y_test, y_pred_logreg)
-        print('Logistic Regression Accuracy: {:.2%}'.format(accuracy_logreg))
+# Predict the survival probability for the new passenger
+dead_proba, alive_proba = np.squeeze(logreg.predict_proba(new_passenger))
 
-def initTitanic():
-    global titanic_regression
-    titanic_regression = TitanicRegression()
-    titanic_regression.initTitanic()
-    titanic_regression.runDecisionTree()
-    titanic_regression.runLogisticRegression()
-
-    # Store column names for reference
-    titanic_regression.column_names = titanic_data.drop('survived', axis=1).columns.tolist()
-
-def predictSurvival(passenger):
-    passenger_df = pd.DataFrame(passenger, index=[0])   
-    passenger_df.drop(['name'], axis=1, inplace=True)
-    passenger = passenger_df.copy()
-
-    # Add missing columns and fill them with default values
-    missing_cols = set(titanic_regression.column_names) - set(passenger.columns)
-    for col in missing_cols:
-        passenger[col] = 0
-
-# Sample usage
-if __name__ == "__main__":
-    # Initialize the Titanic model
-    initTitanic()
-
-    # Predict the survival of a passenger
-    passenger = {
-        'name': ['John Mortensen'],
-        'pclass': [2],
-        'sex': ['male'],
-        'age': [64],
-        'sibsp': [1],
-        'parch': [1],
-        'fare': [16.00],
-        'embarked': ['S'],
-        'alone': [False]
-    }
-    print(predictSurvival(passenger))
+# Print the survival probability
+print('Death probability: {:.2%}'.format(dead_proba))  
+print('Survival probability: {:.2%}'.format(alive_proba))
