@@ -7,12 +7,9 @@ from model.users import User, Design
 
 user_api = Blueprint('user_api', __name__,
                    url_prefix='/api/users')
-titanic_api = Blueprint('titanic_api', __name__,
-                    url_prefix='api/titanics')
 
 # API docs https://flask-restful.readthedocs.io/en/latest/api.html
 api = Api(user_api)
-api2 = Api(titanic_api)
 
 class UserAPI:        
     class _CRUD(Resource):  # User API operation for Create, Read.  THe Update, Delete methods need to be implemeented
@@ -297,17 +294,15 @@ class UserAPI:
                         "error": str(e),
                         "data": None
                 }, 500
-    class Titanic(Resource):
-        def post(self):
-            passenger_data = request.get_json()
-
-            return jsonify(response)
+    class Prediction(Resource):
+        def get():
+            body = request.get_json()
             
     # building RESTapi endpoint
     api.add_resource(_CRUD, '/')
     api.add_resource(_DesignCRUD, '/design')
     api.add_resource(_SearchCRUD, '/search')
-    api.add_resource(Titanic, '/titanic')
+    api.add_resource(Prediction, '/titanic')
     api.add_resource(Images,'/images')
     api.add_resource(_Security, '/authenticate')
     
