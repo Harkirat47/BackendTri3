@@ -1,19 +1,23 @@
 from flask import Blueprint, request, jsonify
-from model.train import titanic_model
+from flask_restful import Api, Resource # import API package
+from model.titanics import TitanicRegression
 
 predict_api = Blueprint('predict_api', __name__)
 
-@predict_api.route('/predict', methods=['POST'])
-def predict():
-    # Get passenger data from request
-    passenger_data = request.json
+titanic_api = Blueprint('titanic_api', __name__,
+                   url_prefix='/api/titanic') # initialize titanic api url
 
-    # Preprocess passenger data
-    # Apply the same preprocessing steps used during training
+# API docs https://flask-restful.readthedocs.io/en/latest/api.html
+api = Api(titanic_api)
 
-    # Make predictions using trained models
-    logreg, dt, encoder, X_train, X_test, y_train, y_test = titanic_model.get_models()
-    # Perform predictions using logreg or dt based on your requirement
+# Initialize the model
+titanic_model = TitanicRegression()
 
-    # Return prediction results
-    return jsonify({'prediction': prediction_result})
+class TitanicApi:        
+    class _CRUD(Resource): 
+        def post(self):
+            data = request.get_json()
+            alive_prob = titanic_model.predict(data)
+            return jsonify({'survival_probability': alive_prob})
+
+    api.add_resource(_CRUD, '/')

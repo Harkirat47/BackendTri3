@@ -3,7 +3,7 @@ from flask import Blueprint, request, jsonify, current_app, Response
 from flask_restful import Api, Resource # used for REST API building
 from datetime import datetime
 from auth_middleware import token_required
-from model.users import User, Design
+from model.users import User
 
 user_api = Blueprint('user_api', __name__,
                    url_prefix='/api/users')
@@ -110,113 +110,6 @@ class UserAPI:
                     }
                     return jsonify(thing)
                     
-    
-    class _DesignCRUD(Resource):  # Design CRUD
-        @token_required
-        def post(self, current_user): # Create design
-            ''' Read data for json body '''
-            token = request.cookies.get("jwt")
-            cur_user = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])['_uid']
-            users = User.query.all()
-            for user in users:
-                if user.uid==cur_user: # modified with the and user.id==cur_user so random users can't delete other ppl
-                    id = user.id
-            print("here")
-            body = request.get_json()
-            name = body.get('name')
-            content = body.get('content')
-            description = body.get('description')
-            type = body.get('type')
-            if (type != "public" and type != "private"):
-                return {'message': f'Design type must be public or private'}, 400
-            do = Design(id=id, type=type, content=content, name=name,description=description)
-            design = do.create()
-            # success returns json of user
-            if design:
-                return jsonify(user.read())
-        
-        @token_required
-        def delete(self, current_user):
-            body = request.get_json() # get the body of the request
-            token = request.cookies.get("jwt")
-            cur_user = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])['_uid']
-            users = User.query.all()
-            for user in users:
-                if user.uid==cur_user: # modified with the and user.id==cur_user so random users can't delete other ppl
-                    id = user.id
-            like = body.get('like')
-            dislike = body.get('dislike')
-            name = body.get('name')
-            if (like != "add") and (dislike != "add") and (like != "remove") and (dislike != "remove"):
-                return f"Like/Dislike must be add or remove", 400
-            designs = Design.query.all()
-            for design in designs:
-                if design.userID == id and design.name == name:
-                    design.update('','','', (1 if like == "add" else (-1 if like == "remove" else 0)), (1 if dislike == "add" else (-1 if dislike == "remove" else 0)))
-                    return f"{design.read()} Updated"
-            return f"Cannot locate design", 400
-        
-        @token_required
-        def put(self, current_user):
-            body = request.get_json() # get the body of the request
-            token = request.cookies.get("jwt")
-            cur_user = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])['_uid']
-            users = User.query.all()
-            for user in users:
-                if user.uid==cur_user: # modified with the and user.id==cur_user so random users can't delete other ppl
-                    id = user.id
-            name = body.get('name')
-            content = body.get('content')
-            type = body.get('type')
-            description = body.get('description')
-            designs = Design.query.all()
-            for design in designs:
-                if design.userID == id and design.name == name:
-                    design.update('',content,type,0,0,description)
-                    return f"{design.read()} Updated"
-            return f"Cannot locate design", 400
-        
-        @token_required
-        def patch(self, current_user):
-            body = request.get_json() # get the body of the request
-            name = body.get('name')
-            token = request.cookies.get("jwt")
-            cur_user = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])['_uid']
-            users = User.query.all()
-            for user in users:
-                if user.uid==cur_user: # modified with the and user.id==cur_user so random users can't delete other ppl
-                    id = user.id
-            designs = Design.query.all()
-            for design in designs:
-                if design.userID == id and design.name == name:
-                    return jsonify(design.read())
-            return f"Cannot locate design", 400
-
-    class _SearchCRUD(Resource):
-        # public search of all designs
-        def get(self):
-            design_return=[]# all designs stored in the database
-            designs = Design.query.all()
-            for design in designs: # we going through every design
-                if(design.read()['Type']=='public'):
-                    design_return.append(design.__repr__())
-            return jsonify({"Designs":design_return}) # returning designs of all users that are public
-        
-        # get all private designs
-        @token_required
-        def put(self, current_user):
-            token = request.cookies.get("jwt")
-            cur_user = jwt.decode(token, current_app.config["SECRET_KEY"], algorithms=["HS256"])['_uid'] # current user
-            users = User.query.all()
-            for user in users:
-                if user.uid==cur_user: 
-                    id = user.id
-            designs=Design.query.all() # this is all the designs for the user
-            design_return=[]# all designs stored in the database for the user
-            for design in designs: # we going through every design
-                if design.userID == id:
-                    design_return.append(design.__repr__())
-            return jsonify({"Designs":design_return}) # returning all the designs of the user        
     class Images(Resource):
         @token_required
         def post(self,current_user):
@@ -294,15 +187,9 @@ class UserAPI:
                         "error": str(e),
                         "data": None
                 }, 500
-    class Prediction(Resource):
-        def get():
-            body = request.get_json()
             
     # building RESTapi endpoint
     api.add_resource(_CRUD, '/')
-    api.add_resource(_DesignCRUD, '/design')
-    api.add_resource(_SearchCRUD, '/search')
-    api.add_resource(Prediction, '/titanic')
     api.add_resource(Images,'/images')
     api.add_resource(_Security, '/authenticate')
     
