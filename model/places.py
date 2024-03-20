@@ -1,46 +1,61 @@
 import tensorflow as tf
-import os
-import cv2
-import imghdr
-import numpy as np
-from matplotlib import pyplot as plt
-
-from tensorflow.keras.models import Sequential
 from tensorflow.keras import layers, models
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Dense, Flatten
 
-data = '/Users/shubhay/Documents/GitHub/BackendTri3/places'
-data = tf.keras.utils.image_dataset_from_directory('/Users/shubhay/Documents/GitHub/BackendTri3/places')
+class ImageClassifier:
+    def __init__(self, data_path, epochs=30):
+        self.data_path = data_path
+        self.epochs = epochs
+        self.data = None
+        self.model = None
 
-data_iterator = data.as_numpy_iterator()
-batch = data_iterator.next()
-data = data
-scaled_iterator = data.as_numpy_iterator()
-batch = scaled_iterator.next()
+    def load_data(self):
+        self.data = tf.keras.utils.image_dataset_from_directory(
+            self.data_path,
+            image_size=(256, 256),
+            batch_size=32,
+            validation_split=0.2,
+            subset="training",
+            seed=42,
+        )
 
-train_size = int(len(data)*.7)
-val_size = int(len(data)*.2)
-test_data = int(len(data)*.1)
+    def build_model(self):
+        self.model = models.Sequential([
+            layers.Conv2D(32, (3, 3), activation='relu', input_shape=(256, 256, 3)),
+            layers.MaxPooling2D((2, 2)),
+            layers.Conv2D(64, (3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
+            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
+            layers.Conv2D(128, (3, 3), activation='relu'),
+            layers.MaxPooling2D((2, 2)),
+            layers.Flatten(),
+            layers.Dense(512, activation='relu'),
+            layers.Dense(10, activation='softmax')  # 10 classes
+        ])
 
-train = data.take(train_size)
-val = data.skip(train_size).take(val_size)
+        self.model.compile(optimizer='adam',
+                           loss='sparse_categorical_crossentropy',
+                           metrics=['accuracy'])
 
-model = models.Sequential([
-    layers.Conv2D(32, (3, 3), activation='relu', input_shape=(256, 256, 3)),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(64, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Conv2D(128, (3, 3), activation='relu'),
-    layers.MaxPooling2D((2, 2)),
-    layers.Flatten(),
-    layers.Dense(512, activation='relu'),
-    layers.Dense(10, activation='softmax')  # 10 classes
-])
+    def train_model(self):
+        if self.data is None:
+            print("Data not loaded. Please call load_data() first.")
+            return
 
-model.compile(optimizer='adam',
-              loss='sparse_categorical_crossentropy',
-              metrics=['accuracy'])
+        train_size = int(len(self.data) * 0.7)
+        val_size = int(len(self.data) * 0.2)
 
-hist = model.fit(train, epochs=30, validation_data=val,)
+        train_data = self.data.take(train_size)
+        val_data = self.data.skip(train_size).take(val_size)
+
+        hist = self.model.fit(train_data, epochs=self.epochs, validation_data=val_data)
+
+    def train(self):
+        self.load_data()
+        self.build_model()
+        self.train_model()
+
+# Example usage:
+if __name__ == "__main__":
+    classifier = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
+    classifier.train()
