@@ -2,8 +2,8 @@ import os
 from flask import Blueprint, request, jsonify, current_app
 from flask_restful import Api, Resource
 from werkzeug.utils import secure_filename
-from model.model import Image  # Importing Image model
-from model.model import db  # Importing db from SQLAlchemy setup file
+from images.model import Image  # Importing Image model
+from images.model import db  # Importing db from SQLAlchemy setup file
 
 image_api = Blueprint('image_api', __name__, url_prefix='/api/image')
 api = Api(image_api)
