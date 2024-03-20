@@ -88,6 +88,16 @@ class ImageClassifier:
             _, predicted = torch.max(output, 1)
             return predicted.item()
 
+
+def initPlaces():
+    global ImageClassifier
+    places_classfier = ImageClassifier()
+    places_classfier._initialize_model()
+    places_classfier.train_model(num_epochs=20)
+
+
+
+
 # classifier = ImageClassifier(dataset_path='/Users/shubhay/Documents/GitHub/BackendTri3/places')
 # classifier.train_model()
 # predicted_class = classifier.predict_image_class("/content/drive/MyDrive/ML/Data/places/Golden_Gate_Bridge/00b4e41b02.jpg")
