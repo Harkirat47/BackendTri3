@@ -88,7 +88,7 @@ class Titanic2Regression:
         accuracy = accuracy_score(y_test, y_pred)
         print('LogisticRegression Accuracy: {:.2%}'.format(accuracy))  
 
-def initTitanic():
+def initTitanic2():
     global titanic_regression
     titanic_regression = TitanicRegression()
     titanic_regression.initTitanic()
