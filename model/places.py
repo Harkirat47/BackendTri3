@@ -1,109 +1,93 @@
-import tensorflow as tf
-from tensorflow.keras import layers, models
-from random import randrange
-from datetime import date
-import os, base64
-import json
-
-from __init__ import app, db
-from sqlalchemy.exc import IntegrityError
-from werkzeug.security import generate_password_hash, check_password_hash
-
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.exc import IntegrityError
 import os
-import base64
+import torch
+import torch.nn as nn
+import torch.optim as optim
+from torchvision import datasets, models, transforms
+import cv2
+from torch.utils.data import DataLoader
+from collections import Counter
+from PIL import Image
 
-# Assuming `db` is your Flask-SQLAlchemy instance
-class Image(db.Model):
-    __tablename__ = 'images'
 
-    # Define the Image schema
-    id = db.Column(db.Integer, primary_key=True)
-    image_data = db.Column(db.Text, nullable=False)
+dataset_path = '/Users/shubhay/Documents/GitHub/BackendTri3/places'
 
-    # Constructor of an Image object
-    def __init__(self, image_data):
-        self.image_data = image_data
+img_width, img_height = 128, 128
+batch_size = 32
 
-    # Returns a string representation of the Image object
-    def __repr__(self):
-        return f"Image(id={self.id})"
+data_transforms = transforms.Compose([
+    transforms.Resize((img_width, img_height)),
+    transforms.CenterCrop(img_width),
+    transforms.ToTensor(),
+    transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+])
 
-    # CRUD create, adds a new record to the Image table
-    def create(self):
-        try:
-            db.session.add(self)
-            db.session.commit()
-            return self
-        except IntegrityError:
-            db.session.rollback()
-            return None
+images = []
+labels = []
 
-    # CRUD read, returns dictionary representation of Image object
-    def read(self):
-        return {
-            "id": self.id,
-            "image_data": self.image_data
-        }
+max_images_per_place = 12
 
-    db.session.commit()
+for location_folder in os.listdir(dataset_path):
+    location_folder_path = os.path.join(dataset_path, location_folder)
+    if os.path.isdir(location_folder_path):
+        # Traverse through each image in the location folder
+        count = 0
+        for image_file in os.listdir(location_folder_path):
+            if count >= max_images_per_place:
+                break
+            image_path = os.path.join(location_folder_path, image_file)
+            # Load and transform the image
+            image = data_transforms(Image.open(image_path))
+            images.append(image)
+            labels.append(location_folder)  # Assuming folder name is the label
+            count += 1
 
-class ImageClassifier:
-    def __init__(self, data_path, epochs=30):
-        self.data_path = data_path
-        self.epochs = epochs
-        self.data = None
-        self.model = None
+label_counter = Counter(labels)
+label_vocab = {label: i for i, label in enumerate(label_counter)}
+labels = [label_vocab[label] for label in labels]
 
-    def load_data(self):
-        self.data = tf.keras.utils.image_dataset_from_directory(
-            self.data_path,
-            image_size=(256, 256),
-            batch_size=32,
-            validation_split=0.2,
-            subset="training",
-            seed=42,
-        )
+images = torch.stack(images)
+labels = torch.tensor(labels)
 
-    def build_model(self):
-        self.model = models.Sequential([
-            layers.Conv2D(32, (3, 3), activation='relu', input_shape=(256, 256, 3)),
-            layers.MaxPooling2D((2, 2)),
-            layers.Conv2D(64, (3, 3), activation='relu'),
-            layers.MaxPooling2D((2, 2)),
-            layers.Conv2D(128, (3, 3), activation='relu'),
-            layers.MaxPooling2D((2, 2)),
-            layers.Conv2D(128, (3, 3), activation='relu'),
-            layers.MaxPooling2D((2, 2)),
-            layers.Flatten(),
-            layers.Dense(512, activation='relu'),
-            layers.Dense(10, activation='softmax')  # 10 classes
-        ])
+image_dataset = torch.utils.data.TensorDataset(images, labels)
 
-        self.model.compile(optimizer='adam',
-                           loss='sparse_categorical_crossentropy',
-                           metrics=['accuracy'])
 
-    def train_model(self):
-        if self.data is None:
-            print("Data not loaded. Please call load_data() first.")
-            return
+data_loader = DataLoader(image_dataset, batch_size=batch_size, shuffle=True)
 
-        train_size = int(len(self.data) * 0.7)
-        val_size = int(len(self.data) * 0.2)
+num_classes = len(label_counter)
 
-        train_data = self.data.take(train_size)
-        val_data = self.data.skip(train_size).take(val_size)
+model = models.resnet50(pretrained=True)
+num_features = model.fc.in_features
 
-        hist = self.model.fit(train_data, epochs=self.epochs, validation_data=val_data)
+model.fc = nn.Linear(num_features, num_classes)
 
-    def train(self):
-        self.load_data()
-        self.build_model()
-        self.train_model()
+criterion = nn.CrossEntropyLoss()
+optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-def initImageClassifier():
-    global places_model
-    places_model = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
-    places_model.train()
+def train_model(model, criterion, optimizer, num_epochs=20):
+    model.train()
+    for epoch in range(num_epochs):
+        running_loss = 0.0
+        for inputs, labels in data_loader:
+            optimizer.zero_grad()
+            outputs = model(inputs)
+            loss = criterion(outputs, labels)
+            loss.backward()
+            optimizer.step()
+            running_loss += loss.item() * inputs.size(0)
+        epoch_loss = running_loss / len(image_dataset)
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
+
+train_model(model, criterion, optimizer)
+
+def predict_image_class(image_path):
+    image = Image.open(image_path)
+    image = data_transforms(image).unsqueeze(0)  # Apply transformations directly
+    model.eval()
+    with torch.no_grad():
+        output = model(image)
+        _, predicted = torch.max(output, 1)
+        return predicted.item()
+
+
+predicted_class = predict_image_class("/content/drive/MyDrive/ML/Data/places/Golden_Gate_Bridge/00b4e41b02.jpg")
+print("Predicted class:", predicted_class)
