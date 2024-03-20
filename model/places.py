@@ -103,7 +103,7 @@ class ImageClassifier:
         self.build_model()
         self.train_model()
 
-# Example usage:
-if __name__ == "__main__":
-    classifier = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
-    classifier.train()
+def initImageClassifier():
+    global places_model
+    places_model = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
+    places_model.train()

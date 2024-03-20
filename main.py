@@ -14,10 +14,12 @@ from api.covid import covid_api # Blueprint import api definition
 from api.joke import joke_api # Blueprint import api definition
 from api.user import user_api # Blueprint import api definition
 from api.player import player_api
+from api.places import places_api
 # database migrations
 from model.users import initUsers
 from model.players import initPlayers
 from model.titanics import initTitanic
+from model.places import initImageClassifier
 
 # setup App pages
 from projects.projects import app_projects # Blueprint directory import projects definition
@@ -31,6 +33,7 @@ app.register_blueprint(joke_api) # register api routes
 app.register_blueprint(covid_api) # register api routes
 app.register_blueprint(user_api) # register api routes
 app.register_blueprint(player_api)
+app.register_blueprint(places_api)
 app.register_blueprint(app_projects) # register app pages
 
 @app.errorhandler(404)  # catch for URL not found
@@ -62,6 +65,7 @@ def generate_data():
     initUsers()
     initPlayers()
     initTitanic()
+    initImageClassifier()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)
