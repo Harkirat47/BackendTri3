@@ -1,5 +1,53 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from random import randrange
+from datetime import date
+import os, base64
+import json
+
+from __init__ import app, db
+from sqlalchemy.exc import IntegrityError
+from werkzeug.security import generate_password_hash, check_password_hash
+
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import IntegrityError
+import os
+import base64
+
+# Assuming `db` is your Flask-SQLAlchemy instance
+class Image(db.Model):
+    __tablename__ = 'images'
+
+    # Define the Image schema
+    id = db.Column(db.Integer, primary_key=True)
+    image_data = db.Column(db.Text, nullable=False)
+
+    # Constructor of an Image object
+    def __init__(self, image_data):
+        self.image_data = image_data
+
+    # Returns a string representation of the Image object
+    def __repr__(self):
+        return f"Image(id={self.id})"
+
+    # CRUD create, adds a new record to the Image table
+    def create(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return self
+        except IntegrityError:
+            db.session.rollback()
+            return None
+
+    # CRUD read, returns dictionary representation of Image object
+    def read(self):
+        return {
+            "id": self.id,
+            "image_data": self.image_data
+        }
+
+    db.session.commit()
 
 class ImageClassifier:
     def __init__(self, data_path, epochs=30):
