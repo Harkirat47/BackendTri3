@@ -32,7 +32,7 @@ class Titanic2API:
                 'embarked': [embark], 
                 'alone': [True if fmem == 0 else False]
             })
-            initTitanic()
+            initTitanic2()
             return predictSurvival(passenger)
     api.add_resource(_Titanic, '/')
     

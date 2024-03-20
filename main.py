@@ -19,8 +19,7 @@ from api.titanicIAN import model_api
 from model.users import initUsers
 from model.players import initPlayers
 from model.titanics import initTitanic
-from model.places import initImageClassifier
-from model.titanicIAN import initTianic
+from model.titanicIAN import initTitanic2
 
 # setup App pages
 from projects.projects import app_projects # Blueprint directory import projects definition
@@ -66,7 +65,7 @@ def generate_data():
     initUsers()
     initPlayers()
     initTitanic()
-    initTi
+    initTitanic2()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)
