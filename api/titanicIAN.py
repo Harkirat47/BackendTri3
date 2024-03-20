@@ -7,11 +7,10 @@ import pandas as pd
 from model.titanicIAN import *
 
 model_api = Blueprint('model_api', __name__,
-                   url_prefix='/api/titanic')
+                   url_prefix='/api/titanic2')
 
-# API docs https://flask-restful.readthedocs.io/en/latest/api.html
 api = Api(model_api)
-class TitanicAPI:        
+class Titanic2API:        
     class _Titanic(Resource):
         def post(self):
             body = request.get_json()

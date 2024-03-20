@@ -11,7 +11,7 @@ import numpy as np
 titanic_regression = None
 
 # Define the TitanicRegression class
-class TitanicRegression:
+class Titanic2Regression:
     def __init__(self):
         self.dt = None
         self.logreg = None
