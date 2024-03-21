@@ -15,11 +15,14 @@ from api.joke import joke_api # Blueprint import api definition
 from api.user import user_api # Blueprint import api definition
 from api.player import player_api
 from api.titanicIAN import model_api
+from api.places import places_api
+from api.images import image_api
 # database migrations
 from model.users import initUsers
 from model.players import initPlayers
 from model.titanics import initTitanic
 from model.titanicIAN import initTitanic2
+from model.places import initPlaces
 from api.model import model_api
 
 # setup App pages
@@ -36,6 +39,8 @@ app.register_blueprint(user_api) # register api routes
 app.register_blueprint(player_api)
 app.register_blueprint(app_projects) # register app pages
 app.register_blueprint(model_api)
+app.register_blueprint(places_api)
+app.register_blueprint(image_api)
 
 @app.errorhandler(404)  # catch for URL not found
 def page_not_found(e):
