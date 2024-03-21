@@ -20,6 +20,7 @@ from model.users import initUsers
 from model.players import initPlayers
 from model.titanics import initTitanic
 from model.titanicIAN import initTitanic2
+from api.model import model_api
 
 # setup App pages
 from projects.projects import app_projects # Blueprint directory import projects definition
@@ -53,7 +54,7 @@ def table():
 def before_request():
     # Check if the request came from a specific origin
     allowed_origin = request.headers.get('Origin')
-    if allowed_origin in ['http://localhost:4000', 'http://127.0.0.1:4100', 'https://nighthawkcoders.github.io','http://127.0.0.1:4000','http://127.0.0.1:4000.Titanic.html']:
+    if allowed_origin in ['http://localhost:4000', 'https://nighthawkcoders.github.io','http://127.0.0.1:4000','http://127.0.0.1:4000.Titanic.html']:
         cors._origins = allowed_origin
 
 # Create an AppGroup for custom commands
