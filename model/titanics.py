@@ -22,6 +22,7 @@ class TitanicRegression:
 
         def initTitanic(self):
                 titanic_data = sns.load_dataset('titanic')
+                global td
                 self.td = titanic_data
                 self.td.drop(['alive', 'who', 'adult_male', 'class', 'embark_town', 'deck'], axis=1, inplace=True)
                 self.td.dropna(inplace=True) # drop rows with at least one missing value, after dropping unuseful columns
