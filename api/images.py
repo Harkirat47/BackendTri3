@@ -18,7 +18,7 @@ class ImageAPI:
             if 'file' not in request.files:
                 return {'message': 'No file part'}, 400
 
-            file = request.files['file']
+            file = request.files['0a32f7815c.jpg']
 
             if file.filename == '':
                 return {'message': 'No selected file'}, 400

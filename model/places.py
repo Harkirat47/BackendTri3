@@ -6,6 +6,7 @@ from torchvision import datasets, models, transforms
 from torch.utils.data import DataLoader
 from collections import Counter
 from PIL import Image
+from io import BytesIO
 
 class ImageClassifier:
     def __init__(self, dataset_path, img_width=128, img_height=128, batch_size=32):
@@ -59,7 +60,7 @@ class ImageClassifier:
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, num_classes)
 
-    def train_model(self, num_epochs=20):
+    def train_model(self, num_epochs=10):
         self._preprocess_data()
         self._initialize_model()
 
@@ -79,21 +80,23 @@ class ImageClassifier:
             epoch_loss = running_loss / len(self.image_dataset)
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
 
-    def predict_image_class(self, image_path):
-        image = Image.open(image_path)
+    def predict_image_class(self, image):
         image = self.data_transforms(image).unsqueeze(0)
         self.model.eval()
         with torch.no_grad():
             output = self.model(image)
             _, predicted = torch.max(output, 1)
-            return predicted.item()
+            # Convert predicted to a standard Python datatype
+            predicted_item = predicted.item()
+            return predicted_item
+
 
 
 def initPlaces():
     global ImageClassifier
     places_classfier = ImageClassifier()
     places_classfier._initialize_model()
-    places_classfier.train_model(num_epochs=20)
+    places_classfier.train_model(num_epochs=10)
 
 
 
