@@ -9,7 +9,7 @@ api = Api(places_api)
 
 # Initialize the model
 places_model = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
-places_model.train()
+places_model.train_model()
 
 class ImageApi:
     class Upload(Resource):
