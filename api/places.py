@@ -11,7 +11,7 @@ places_api = Blueprint('places_api', __name__, url_prefix='/api/places')
 api = Api(places_api)
 
 # Initialize the model
-places_model = ImageClassifier('/Users/shubhay/Documents/GitHub/BackendTri3/places')
+places_model = ImageClassifier('./places')
 places_model.train_model()
 
 class ImageApi:
