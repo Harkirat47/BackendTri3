@@ -52,8 +52,8 @@ class ImageApi:
 
                 image = Image.open('temp.jpg')
                 predictions = places_model.predict_image_class(image)
-
-                return jsonify({'predictions': predictions})
+                maps = {4: "Big Ben"}
+                return jsonify({'predictions': maps[predictions]})
             except Exception as e:
                 print(e)
 
