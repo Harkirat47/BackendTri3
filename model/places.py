@@ -10,11 +10,13 @@ from io import BytesIO
 
 class ImageClassifier:
     def __init__(self, dataset_path, img_width=128, img_height=128, batch_size=32):
+        ## initialize variables, standardize image height and width
         self.dataset_path = dataset_path
         self.img_width = img_width
         self.img_height = img_height
         self.batch_size = batch_size
 
+        ## converts all image to same size, centers, data processing, etc.
         self.data_transforms = transforms.Compose([
             transforms.Resize((self.img_width, self.img_height)),
             transforms.CenterCrop(self.img_width),
@@ -31,19 +33,26 @@ class ImageClassifier:
         images = []
         labels = []
         max_images_per_place = 12
+        ## gets data, first iterates through the path of the dataset provided.
         for location_folder in os.listdir(self.dataset_path):
+            ## generates full path from root by combining base with folder
             location_folder_path = os.path.join(self.dataset_path, location_folder)
             if os.path.isdir(location_folder_path):
                 count = 0
+                ## selects every file from the image, up to the specific max
                 for image_file in os.listdir(location_folder_path):
                     if count >= max_images_per_place:
                         break
                     image_path = os.path.join(location_folder_path, image_file)
+                    ## opens each image path as a PIL image
                     image = self.data_transforms(Image.open(image_path))
+                    ## adds image to image list
                     images.append(image)
+                    ## adds to label as one of categories that shall be classifird
                     labels.append(location_folder)
                     count += 1
 
+        ## section below initializes data and prepares for model
         label_counter = Counter(labels)
         self.label_vocab = {label: i for i, label in enumerate(label_counter)}
         labels = [self.label_vocab[label] for label in labels]
@@ -55,19 +64,24 @@ class ImageClassifier:
         self.data_loader = DataLoader(self.image_dataset, batch_size=self.batch_size, shuffle=True)
 
     def _initialize_model(self):
+        ## sets basic information of the model, i.e. number of images we want to classify, sets for Linear
         num_classes = len(self.label_vocab)
         self.model = models.resnet50(pretrained=True)
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, num_classes)
 
     def train_model(self, num_epochs=10):
+        ## process data, set initial variables
         self._preprocess_data()
         self._initialize_model()
 
+        ## specific optimizer and criteria using torch
         criterion = nn.CrossEntropyLoss()
         optimizer = optim.SGD(self.model.parameters(), lr=0.001, momentum=0.9)
 
+        ## train model
         self.model.train()
+        ## determines loss for each epoch, loss should be decreasing with each epoch
         for epoch in range(num_epochs):
             running_loss = 0.0
             for inputs, labels in self.data_loader:
@@ -77,7 +91,9 @@ class ImageClassifier:
                 loss.backward()
                 optimizer.step()
                 running_loss += loss.item() * inputs.size(0)
+            ## determine loss for entire epoch, divides loss by length of dataset
             epoch_loss = running_loss / len(self.image_dataset)
+            ## display epoch and loss
             print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
 
     def predict_image_class(self, image):
