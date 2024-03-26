@@ -69,9 +69,11 @@ class ImageApi:
                         "1": "Leaning Tower of Pisa",
                         "3": "Macchu Picchu",
                         "9": "Osaka Castle",
+                        "0": "Statue of Liberty",
+                        "7": "Pyramids of Giza"
                         }
                 ## return text based on prediction
-                return jsonify({'predictions': maps[predictions]})
+                return jsonify({'predictions': predictions})
             except Exception as e:
                 print(e)
 
