@@ -9,8 +9,6 @@ Flask_Restful
 Flask_Cors
 PyJWT
 pandas
-PIL
-io
-urllib
+Pillow
 torchvision
 torch
