@@ -70,7 +70,7 @@ class ImageClassifier:
         num_features = self.model.fc.in_features
         self.model.fc = nn.Linear(num_features, num_classes)
 
-    def train_model(self, num_epochs=10):
+    def train_model(self, num_epochs=1):
         ## process data, set initial variables
         self._preprocess_data()
         self._initialize_model()
@@ -112,7 +112,7 @@ def initPlaces():
     global ImageClassifier
     places_classfier = ImageClassifier()
     places_classfier._initialize_model()
-    places_classfier.train_model(num_epochs=10)
+    places_classfier.train_model(num_epochs=1)
 
 
 
