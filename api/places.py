@@ -73,7 +73,7 @@ class ImageApi:
                         "7": "Pyramids of Giza"
                         }
                 ## return text based on prediction
-                return jsonify({'predictions': predictions})
+                return jsonify({'predictions': maps[str(predictions)]})
             except Exception as e:
                 print(e)
 
